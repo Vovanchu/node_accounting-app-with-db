@@ -18,8 +18,8 @@ const deleteUser = (id) => {
   return User.destroy({ where: { id } });
 };
 
-const updateUser = (id, name) => {
-  return User.update({ name }, { where: { id } });
+const updateUser = (id, data) => {
+  return User.update(data, { where: { id } });
 };
 
 module.exports = {

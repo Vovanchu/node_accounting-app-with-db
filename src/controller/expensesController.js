@@ -43,31 +43,37 @@ const getExpenseById = async (req, res) => {
 
 const createExpense = async (req, res) => {
   try {
-    const expenseData = req.body;
+    const {
+      spentAt,
+      title,
+      amount,
+      category = 'Other',
+      userId,
+      note,
+    } = req.body;
 
-    // Перевірка обов'язкових полів
-    if (
-      !expenseData.spent_at ||
-      !expenseData.title ||
-      expenseData.amount === undefined ||
-      !expenseData.category ||
-      !expenseData.user_id
-    ) {
+    if (!spentAt || !title || amount === undefined || !category || !userId) {
       return res
         .status(400)
         .send(
-          'Missing required fields: spent_at, title, amount, category, user_id',
+          'Missing required fields: spentAt, title, amount, category, userId',
         );
     }
 
-    // Перевірка чи існує користувач
-    const userExists = await serviceUser.getUserById(expenseData.user_id);
+    const userExists = await serviceUser.getUserById(userId);
 
     if (!userExists) {
-      return res.status(404).send('User not found');
+      return res.status(400).send('User not found');
     }
 
-    const newExpense = await serviceExpense.createExpense(expenseData);
+    const newExpense = await serviceExpense.createExpense({
+      spentAt,
+      title,
+      amount,
+      category,
+      userId,
+      note,
+    });
 
     res.status(201).send(newExpense);
   } catch (error) {
@@ -96,21 +102,39 @@ const deleteExpense = async (req, res) => {
 const updateExpense = async (req, res) => {
   try {
     const id = req.params.id;
-    const expenseData = req.body;
+    const expenseData = {
+      ...req.body,
+      userId: req.user?.id ?? req.body.userId,
+    };
 
     if (!id) {
       return res.status(400).send('Expense ID is required');
     }
 
-    const existingExpense = await serviceExpense.getExpenseById(id);
-
-    if (!existingExpense) {
+    if (!(await serviceExpense.getExpenseById(+id))) {
       return res.status(404).send('Expense not found');
     }
 
-    await serviceExpense.updateExpense(id, expenseData);
+    const allowedFields = [
+      'spentAt',
+      'title',
+      'amount',
+      'category',
+      'note',
+      'userId',
+    ];
 
-    const updatedExpense = await serviceExpense.getExpenseById(id);
+    const dataToUpdate = {};
+
+    for (const key of allowedFields) {
+      if (expenseData[key] !== undefined) {
+        dataToUpdate[key] = expenseData[key];
+      }
+    }
+
+    await serviceExpense.updateExpense(+id, dataToUpdate);
+
+    const updatedExpense = await serviceExpense.getExpenseById(+id);
 
     res.status(200).send(updatedExpense);
   } catch (error) {

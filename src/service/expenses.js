@@ -3,20 +3,32 @@
 const { Expense } = require('../models/Expense.model.js');
 const { Op } = require('sequelize');
 
+const baseAttributes = [
+  'id',
+  'userId',
+  'spentAt',
+  'title',
+  'amount',
+  'category',
+  'note',
+];
+
 const getAllExpenses = () => {
-  return Expense.findAll();
+  return Expense.findAll({
+    attributes: baseAttributes,
+  });
 };
 
-const getByQuery = (query) => {
+const getByQuery = async (query) => {
   if (!query || Object.keys(query).length === 0) {
-    return Expense.findAll();
+    return getAllExpenses();
   }
 
   const { userId, categories, from, to } = query;
-  const whereClause = {};
+  const whereConditions = {};
 
   if (userId) {
-    whereClause.user_id = userId; // Виправлено з userId на user_id
+    whereConditions.userId = +userId;
   }
 
   if (categories) {
@@ -24,18 +36,28 @@ const getByQuery = (query) => {
       ? categories
       : categories.split(',');
 
-    whereClause.category = { [Op.in]: categoryList };
+    whereConditions.category = {
+      [Op.in]: categoryList,
+    };
   }
 
   if (from && to) {
-    whereClause.spent_at = { [Op.between]: [from, to] };
+    whereConditions.spentAt = {
+      [Op.between]: [new Date(from), new Date(to)],
+    };
   }
 
-  return Expense.findAll({ where: whereClause });
+  return Expense.findAll({
+    where: whereConditions,
+    order: [['spentAt', 'ASC']],
+    attributes: baseAttributes,
+  });
 };
 
 const getExpenseById = (id) => {
-  return Expense.findByPk(id);
+  return Expense.findByPk(id, {
+    attributes: baseAttributes,
+  });
 };
 
 const createExpense = (expenseData) => {

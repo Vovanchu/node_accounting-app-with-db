@@ -11,19 +11,15 @@ const Expense = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    user_id: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
+      field: 'user_id',
     },
-    spent_at: {
+    spentAt: {
       type: DataTypes.DATE,
       allowNull: false,
+      field: 'spent_at',
     },
     title: {
       type: DataTypes.STRING,
@@ -39,12 +35,14 @@ const Expense = sequelize.define(
     },
     note: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {
     tableName: 'expenses',
     createdAt: false,
     updatedAt: false,
+    timestamps: false,
   },
 );
 
