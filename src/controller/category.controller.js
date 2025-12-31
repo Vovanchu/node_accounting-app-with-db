@@ -1,23 +1,23 @@
 'use strict';
 
-const serviceUser = require('../service/users');
+const serviceCategory = require('../service/category.js');
 
-const getAllUsers = async (req, res) => {
+const getAllCategorys = async (req, res) => {
   try {
-    const users = await serviceUser.getAllUsers();
+    const categorys = await serviceCategory.getAllCategorys();
 
     res.statusCode = 200;
-    res.send(users);
+    res.send(categorys);
   } catch (err) {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 };
 
-const getUserById = async (req, res) => {
+const getCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await serviceUser.getUserById(+id);
+    const user = await serviceCategory.getCategoryById(+id);
 
     if (!user) {
       res.sendStatus(404);
@@ -32,7 +32,7 @@ const getUserById = async (req, res) => {
   }
 };
 
-const createUser = async (req, res) => {
+const createCategory = async (req, res) => {
   try {
     const { name } = req.body;
 
@@ -42,20 +42,20 @@ const createUser = async (req, res) => {
       return;
     }
 
-    const newUser = await serviceUser.createUser(name);
+    const newCategory = await serviceCategory.createCategory(name);
 
     res.statusCode = 201;
-    res.send(newUser);
+    res.send(newCategory);
   } catch (err) {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 };
 
-const deleteUser = async (req, res) => {
+const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await serviceUser.getUserById(+id);
+    const user = await serviceCategory.getCategoryById(+id);
 
     if (!user) {
       res.sendStatus(404);
@@ -63,14 +63,14 @@ const deleteUser = async (req, res) => {
       return;
     }
 
-    await serviceUser.deleteUser(+id);
+    await serviceCategory.deleteCategory(+id);
     res.sendStatus(204);
   } catch (err) {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 };
 
-const updateUser = async (req, res) => {
+const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -79,26 +79,26 @@ const updateUser = async (req, res) => {
       return res.sendStatus(400);
     }
 
-    const existingUser = await serviceUser.getUserById(+id);
+    const existingCategory = await serviceCategory.getCategoryById(+id);
 
-    if (!existingUser) {
+    if (!existingCategory) {
       return res.sendStatus(404);
     }
 
-    await serviceUser.updateUser(+id, { name });
+    await serviceCategory.updateCategory(+id, { name });
 
-    const updatedUser = await serviceUser.getUserById(+id);
+    const updatedCategory = await serviceCategory.getCategoryById(+id);
 
-    return res.status(200).send(updatedUser);
+    return res.status(200).send(updatedCategory);
   } catch (error) {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 };
 
 module.exports = {
-  getAllUsers,
-  getUserById,
-  createUser,
-  deleteUser,
-  updateUser,
+  getAllCategorys,
+  getCategoryById,
+  createCategory,
+  deleteCategory,
+  updateCategory,
 };
