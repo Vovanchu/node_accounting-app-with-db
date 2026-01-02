@@ -2,12 +2,12 @@
 
 const serviceCategory = require('../service/category.js');
 
-const getAllCategorys = async (req, res) => {
+const getAllCategories = async (req, res) => {
   try {
-    const categorys = await serviceCategory.getAllCategorys();
+    const categories = await serviceCategory.getAllCategories();
 
     res.statusCode = 200;
-    res.send(categorys);
+    res.send(categories);
   } catch (err) {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
@@ -96,7 +96,7 @@ const updateCategory = async (req, res) => {
 };
 
 module.exports = {
-  getAllCategorys,
+  getAllCategories,
   getCategoryById,
   createCategory,
   deleteCategory,

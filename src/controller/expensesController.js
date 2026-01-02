@@ -1,22 +1,26 @@
+/* eslint-disable no-console */
+/* eslint-disable no-shadow */
 'use strict';
 
 const serviceExpense = require('../service/expenses.js');
 const serviceUser = require('../service/users.js');
+const serviceCategory = require('../service/category.js');
 
 const getAllExpenses = async (req, res) => {
   try {
     const query = req.query;
 
     if (query && Object.keys(query).length > 0) {
-      const expense = await serviceExpense.getByQuery(query);
+      const expenses = await serviceExpense.getByQuery(query);
 
-      return res.send(expense);
+      return res.send(expenses);
     }
 
     const expenses = await serviceExpense.getAllExpenses();
 
     res.send(expenses);
   } catch (error) {
+    console.error('Error in getAllExpenses:', error);
     res.status(500).send({ error: error.message });
   }
 };
@@ -43,44 +47,34 @@ const getExpenseById = async (req, res) => {
 
 const createExpense = async (req, res) => {
   try {
-    const {
-      spentAt,
-      title,
-      amount,
-      category = 'Other',
-      userId,
-      note,
-    } = req.body;
+    const { userId, spentAt, title, amount, category, note } = req.body;
 
-    if (!spentAt || !title || amount === undefined || !category || !userId) {
-      return res
-        .status(400)
-        .send(
-          'Missing required fields: spentAt, title, amount, category, userId',
-        );
-    }
+    if (
+      !title ||
+      !spentAt ||
+      !amount ||
+      !(await serviceUser.getUserById(+userId))
+    ) {
+      res.sendStatus(400);
 
-    const userExists = await serviceUser.getUserById(userId);
-
-    if (!userExists) {
-      return res.status(400).send('User not found');
+      return;
     }
 
     const newExpense = await serviceExpense.createExpense({
+      userId,
       spentAt,
       title,
       amount,
       category,
-      userId,
       note,
     });
 
-    res.status(201).send(newExpense);
+    res.statusCode = 201;
+    res.send(newExpense);
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    return res.status(500).send({ error: error.message });
   }
 };
-
 const deleteExpense = async (req, res) => {
   try {
     const { id } = req.params;
@@ -92,8 +86,7 @@ const deleteExpense = async (req, res) => {
     }
 
     await serviceExpense.deleteExpense(+id);
-
-    return res.sendStatus(204);
+    res.sendStatus(204);
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
@@ -102,41 +95,51 @@ const deleteExpense = async (req, res) => {
 const updateExpense = async (req, res) => {
   try {
     const id = req.params.id;
-    const expenseData = {
-      ...req.body,
-      userId: req.user?.id ?? req.body.userId,
-    };
+    const { spentAt, title, amount, category, note } = req.body;
 
     if (!id) {
       return res.status(400).send('Expense ID is required');
     }
 
-    if (!(await serviceExpense.getExpenseById(+id))) {
+    const existingExpense = await serviceExpense.getExpenseById(+id);
+
+    if (!existingExpense) {
       return res.status(404).send('Expense not found');
     }
 
-    const allowedFields = [
-      'spentAt',
-      'title',
-      'amount',
-      'category',
-      'note',
-      'userId',
-    ];
-
     const dataToUpdate = {};
 
-    for (const key of allowedFields) {
-      if (expenseData[key] !== undefined) {
-        dataToUpdate[key] = expenseData[key];
+    if (spentAt !== undefined) {
+      dataToUpdate.spentAt = spentAt;
+    }
+
+    if (title !== undefined) {
+      dataToUpdate.title = title;
+    }
+
+    if (amount !== undefined) {
+      dataToUpdate.amount = amount;
+    }
+
+    if (note !== undefined) {
+      dataToUpdate.note = note;
+    }
+
+    if (category !== undefined) {
+      const foundCategory = await serviceCategory.getCategoryByName(category);
+
+      if (!foundCategory) {
+        return res.status(400).send('Category not found');
       }
+
+      dataToUpdate.categoryId = foundCategory.id;
     }
 
     await serviceExpense.updateExpense(+id, dataToUpdate);
 
     const updatedExpense = await serviceExpense.getExpenseById(+id);
 
-    res.status(200).send(updatedExpense);
+    res.send(updatedExpense);
   } catch (error) {
     res.status(500).send({ error: error.message });
   }

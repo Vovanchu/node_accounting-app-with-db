@@ -3,20 +3,8 @@
 const { Expense } = require('../models/Expense.model.js');
 const { Op } = require('sequelize');
 
-const baseAttributes = [
-  'id',
-  'userId',
-  'spentAt',
-  'title',
-  'amount',
-  'category',
-  'note',
-];
-
 const getAllExpenses = () => {
-  return Expense.findAll({
-    attributes: baseAttributes,
-  });
+  return Expense.findAll();
 };
 
 const getByQuery = async (query) => {
@@ -50,18 +38,29 @@ const getByQuery = async (query) => {
   return Expense.findAll({
     where: whereConditions,
     order: [['spentAt', 'ASC']],
-    attributes: baseAttributes,
   });
 };
 
-const getExpenseById = (id) => {
-  return Expense.findByPk(id, {
-    attributes: baseAttributes,
-  });
+const getExpenseById = async (id) => {
+  return Expense.findByPk(id);
 };
 
-const createExpense = (expenseData) => {
-  return Expense.create(expenseData);
+const createExpense = async ({
+  userId,
+  spentAt,
+  title,
+  amount,
+  category,
+  note,
+}) => {
+  return Expense.create({
+    userId,
+    spentAt,
+    title,
+    amount,
+    category,
+    note,
+  });
 };
 
 const deleteExpense = (id) => {
